@@ -229,4 +229,9 @@ app.registerExtension({
       }
     });
   },
+  async setup() {
+    const script = document.createElement("script");
+    script.src = new URL(`assets/pako.min.js`, import.meta.url);
+		document.body.append(script);
+  },
 });

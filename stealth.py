@@ -20,6 +20,8 @@ class SaveImageStealth(SaveImage):
             "required": {
                 "images": ("IMAGE", {"tooltip": "The images to save."}),
                 "filename_prefix": ("STRING", {"default": "ComfyUI-Stealth", "tooltip": "The prefix for the file to save. This may include formatting information such as %date:yyyy-MM-dd% or %Empty Latent Image.width% to include values from nodes."}),
+                "mode": (["alpha", "rgb"], {"default": "alpha"}),
+                "compressed": ("BOOLEAN", {"default": True, "tooltip": "Compress the metadata using gzip."}),
                 "only_stealth": ("BOOLEAN", {"default": False, "tooltip": "Only save stealth metadata (no PNG tEXt chunks)"}),
             },
             "hidden": {
@@ -29,7 +31,7 @@ class SaveImageStealth(SaveImage):
 
     DESCRIPTION = "Saves the input images to your ComfyUI output directory, with metadata additionally written to the alpha channel."
 
-    def save_images(self, images, filename_prefix="ComfyUI-Stealth", prompt=None, extra_pnginfo=None, only_stealth=False):
+    def save_images(self, images, filename_prefix="ComfyUI-Stealth", prompt=None, extra_pnginfo=None, mode="alpha", compressed=True, only_stealth=False):
         filename_prefix += self.prefix_append
         full_output_folder, filename, counter, subfolder, filename_prefix = folder_paths.get_save_image_path(filename_prefix, self.output_dir, images[0].shape[1], images[0].shape[0])
         results = list()
@@ -49,8 +51,9 @@ class SaveImageStealth(SaveImage):
                         if not only_stealth:
                             metadata.add_text(x, json.dumps(extra_pnginfo[x]))
                         stealth_metadata[x] = json.dumps(extra_pnginfo[x])
-                img.putalpha(Image.new("L", img.size, 255))
-                img = stealth_write(img, json.dumps(stealth_metadata))
+                if mode == "alpha":
+                    img.putalpha(Image.new("L", img.size, 255))
+                img = stealth_write(img, json.dumps(stealth_metadata), mode, compressed)
 
             filename_with_batch_num = filename.replace("%batch_num%", str(batch_number))
             file = f"{filename_with_batch_num}_{counter:05}_.png"
