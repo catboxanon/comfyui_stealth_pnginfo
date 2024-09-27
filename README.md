@@ -1,3 +1,11 @@
+# comfyui_stealth_pnginfo
+
+Fork of [sd_webui_stealth_pnginfo](https://github.com/ashen-sensored/sd_webui_stealth_pnginfo) with [ComfyUI](https://github.com/comfyanonymous/ComfyUI) support.
+
+This adds a custom node `Save Image (Stealth)` to write images with stealth metadata, and hooks into the frontend to allow drag-dropping images with stealth metadata embedded to load their workflow.
+
+---
+
 ~~# sd_webui_stealth_pnginfo
 This extension is for bypassing Discord exif data stripping
 Only works for png image, does not work for jpg image. 
