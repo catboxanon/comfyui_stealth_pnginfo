@@ -1,7 +1,7 @@
 [project]
 name = "comfyui_stealth_pnginfo"
 description = "Read and write 'stealth metadata' in PNG files"
-version = "1.0.0"
+version = "1.0.1"
 
 [project.urls]
 Repository = "https://github.com/catboxanon/comfyui_stealth_pnginfo"
