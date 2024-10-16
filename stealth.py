@@ -46,14 +46,16 @@ class SaveImageStealth(SaveImage):
                 stealth_metadata = {}
                 metadata = PngInfo()
                 if prompt is not None:
+                    prompt_json_string = json.dumps(prompt)
                     if not only_stealth:
-                        metadata.add_text("prompt", json.dumps(prompt))
-                    stealth_metadata["prompt"] = json.dumps(prompt)
+                        metadata.add_text("prompt", prompt_json_string)
+                    stealth_metadata["prompt"] = prompt_json_string
                 if extra_pnginfo is not None:
                     for x in extra_pnginfo:
+                        extra_pnginfo_x_json_string = json.dumps(extra_pnginfo[x])
                         if not only_stealth:
-                            metadata.add_text(x, json.dumps(extra_pnginfo[x]))
-                        stealth_metadata[x] = json.dumps(extra_pnginfo[x])
+                            metadata.add_text(x, extra_pnginfo_x_json_string)
+                        stealth_metadata[x] = extra_pnginfo_x_json_string
                 if mode == "alpha":
                     img.putalpha(Image.new("L", img.size, 255))
                 img = stealth_write(img, json.dumps(stealth_metadata), mode, compressed)
