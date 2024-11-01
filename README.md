@@ -4,6 +4,8 @@ Fork of [sd_webui_stealth_pnginfo](https://github.com/ashen-sensored/sd_webui_st
 
 This adds a custom node `Save Image (Stealth)` to write images with stealth metadata, and hooks into the frontend to allow drag-dropping images with stealth metadata embedded to load their workflow.
 
+Original README follows below.
+
 ---
 
 ~~# sd_webui_stealth_pnginfo
