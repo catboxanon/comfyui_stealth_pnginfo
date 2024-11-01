@@ -23,18 +23,15 @@ class SaveImageStealth(SaveImage):
                 "mode": (["alpha", "rgb"], {"default": "alpha"}),
                 "compressed": ("BOOLEAN", {"default": True, "tooltip": "Compress the metadata using gzip."}),
                 "only_stealth": ("BOOLEAN", {"default": False, "tooltip": "Only save stealth metadata (no PNG tEXt chunks)"}),
-                "counter_location": (["prefix", "suffix", "none"], {"default": "suffix"}),
-                "separator_character": ("STRING", {"default": "_"}),
-                "trailing_underscore": ("BOOLEAN", {"default": True}),
             },
             "hidden": {
                 "prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO",
             },
         }
 
-    DESCRIPTION = "Saves the input images to your ComfyUI output directory, with metadata additionally written to the alpha channel or RGB channels."
+    DESCRIPTION = "Saves the input images to your ComfyUI output directory, with metadata additionally written to the alpha channel."
 
-    def save_images(self, images, filename_prefix="ComfyUI-Stealth", prompt=None, extra_pnginfo=None, mode="alpha", compressed=True, only_stealth=False, counter_location="suffix", separator_character="_", trailing_underscore=True):
+    def save_images(self, images, filename_prefix="ComfyUI-Stealth", prompt=None, extra_pnginfo=None, mode="alpha", compressed=True, only_stealth=False):
         filename_prefix += self.prefix_append
         full_output_folder, filename, counter, subfolder, filename_prefix = folder_paths.get_save_image_path(filename_prefix, self.output_dir, images[0].shape[1], images[0].shape[0])
         results = list()
@@ -61,16 +58,7 @@ class SaveImageStealth(SaveImage):
                 img = stealth_write(img, json.dumps(stealth_metadata), mode, compressed)
 
             filename_with_batch_num = filename.replace("%batch_num%", str(batch_number))
-            file = ""
-            if counter_location == "prefix":
-                file += f"{counter:05}{separator_character}"
-            file += filename_with_batch_num
-            if counter_location == "suffix":
-                file += f"{separator_character}{counter:05}"
-            if trailing_underscore:
-                file += "_"
-            file += ".png"
-
+            file = f"{filename_with_batch_num}_{counter:05}_.png"
             img.save(os.path.join(full_output_folder, file), pnginfo=metadata, compress_level=self.compress_level)
             results.append({
                 "filename": file,
