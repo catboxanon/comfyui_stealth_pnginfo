@@ -55,7 +55,7 @@ class SaveImageStealth(SaveImage):
                         stealth_metadata[x] = extra_pnginfo_x_json_string
                 if mode == "alpha":
                     img.putalpha(Image.new("L", img.size, 255))
-                img = stealth_write(img, json.dumps(stealth_metadata), mode, compressed)
+                img: Image.Image = stealth_write(img, json.dumps(stealth_metadata), mode, compressed)  # type: ignore
 
             filename_with_batch_num = filename.replace("%batch_num%", str(batch_number))
             file = f"{filename_with_batch_num}_{counter:05}_.png"
