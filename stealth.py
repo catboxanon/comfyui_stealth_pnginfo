@@ -29,7 +29,7 @@ class SaveImageStealth(SaveImage):
             },
         }
 
-    DESCRIPTION = "Saves the input images to your ComfyUI output directory, with metadata additionally written to the alpha channel."
+    DESCRIPTION = "Saves the input images to your ComfyUI output directory, with metadata additionally written to the alpha channel or RGB channels."
 
     def save_images(self, images, filename_prefix="ComfyUI-Stealth", prompt=None, extra_pnginfo=None, mode="alpha", compressed=True, only_stealth=False):
         filename_prefix += self.prefix_append
