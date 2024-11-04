@@ -1,4 +1,5 @@
 import { app } from "../../scripts/app.js";
+import { applyTextReplacements } from "../../scripts/utils.js";
 
 // https://gist.github.com/catboxanon/ca46eb79ce55e3216aecab49d5c7a3fb
 function imageHasAlpha(context, canvas) {
@@ -234,4 +235,37 @@ app.registerExtension({
     script.src = new URL(`assets/pako.min.js`, import.meta.url);
 		document.body.append(script);
   },
+  // https://github.com/Comfy-Org/ComfyUI_frontend/blob/56b63ebab5d8799a63f4e326a0306601003b018f/src/extensions/core/saveImageExtraOutput.ts
+  async beforeRegisterNodeDef(nodeType, nodeData, app) {
+    if (nodeData.name === 'CatboxAnonSaveImageStealth' || nodeData.name === 'Save Image (Stealth)') {
+      const onNodeCreated = nodeType.prototype.onNodeCreated
+      // When the SaveImage node is created we want to override the serialization of the output name widget to run our S&R
+      nodeType.prototype.onNodeCreated = function () {
+        const r = onNodeCreated
+          ? onNodeCreated.apply(this, arguments)
+          : undefined
+
+        const widget = this.widgets.find((w) => w.name === 'filename_prefix')
+        widget.serializeValue = () => {
+          return applyTextReplacements(app, widget.value)
+        }
+
+        return r
+      }
+    } else {
+      // When any other node is created add a property to alias the node
+      const onNodeCreated = nodeType.prototype.onNodeCreated
+      nodeType.prototype.onNodeCreated = function () {
+        const r = onNodeCreated
+          ? onNodeCreated.apply(this, arguments)
+          : undefined
+
+        if (!this.properties || !('Node name for S&R' in this.properties)) {
+          this.addProperty('Node name for S&R', this.constructor.type, 'string')
+        }
+
+        return r
+      }
+    }
+  }
 });
