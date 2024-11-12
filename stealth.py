@@ -42,6 +42,12 @@ class SaveImageStealth(SaveImage):
             if not args.disable_metadata:
                 stealth_metadata = {}
                 metadata = PngInfo()
+                # Handle `parameters` first if it exists
+                if extra_pnginfo is not None and "parameters" in extra_pnginfo:
+                    parameters = extra_pnginfo["parameters"] if isinstance(extra_pnginfo["parameters"], str) else json.dumps(extra_pnginfo["parameters"])
+                    if not only_stealth:
+                        metadata.add_text("parameters", parameters)
+                    stealth_metadata["parameters"] = parameters
                 if prompt is not None:
                     prompt_json_string = json.dumps(prompt)
                     if not only_stealth:
@@ -49,6 +55,8 @@ class SaveImageStealth(SaveImage):
                     stealth_metadata["prompt"] = prompt_json_string
                 if extra_pnginfo is not None:
                     for x in extra_pnginfo:
+                        if x == "parameters":  # Skip `parameters` as it's already handled
+                            continue
                         extra_pnginfo_x_json_string = json.dumps(extra_pnginfo[x])
                         if not only_stealth:
                             metadata.add_text(x, extra_pnginfo_x_json_string)
