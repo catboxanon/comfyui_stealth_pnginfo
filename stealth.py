@@ -71,8 +71,76 @@ class SaveImageStealth(SaveImage):
 
 
 if __name__ == "__main__":
-    import sys
-    from custom_nodes.comfyui_stealth_pnginfo.util import stealth_read
-    image = Image.open(sys.argv[1])
-    geninfo = stealth_read(image)
-    print(geninfo)
+    import tkinter as tk
+    from tkinter import filedialog, messagebox
+    from PIL import Image
+    from custom_nodes.comfyui_stealth_pnginfo.util import stealth_read, stealth_write
+
+    def load_image():
+        file_path = filedialog.askopenfilename(title="Select an Image", filetypes=[("PNG Images", "*.png")])
+        if file_path:
+            try:
+                global image, geninfo
+                image = Image.open(file_path)
+                geninfo = stealth_read(image)
+                metadata_text.delete("1.0", tk.END)
+                metadata_text.insert(tk.END, geninfo)
+                status_label.config(text="Image loaded successfully.")
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to load image: {e}")
+
+    def save_image():
+        new_geninfo = metadata_text.get("1.0", tk.END).strip()
+
+        # Remove the alpha channel by converting to RGB and then adding a new empty alpha channel
+        image_rgb = image.convert("RGB")
+        image_rgba = image_rgb.convert("RGBA")  # Recreate with an alpha channel but clear it
+
+        # Get values for mode and compressed based on checkbox states
+        mode = "rgb" if mode_var.get() else "alpha"
+        compressed = bool(compressed_var.get())
+
+        # Write new metadata with selected mode and compressed settings
+        stealth_write(image_rgba, new_geninfo, mode=mode, compressed=compressed)
+
+        # Save with file dialog
+        file_path = filedialog.asksaveasfilename(defaultextension=".png", filetypes=[("PNG Images", "*.png")])
+        if file_path:
+            try:
+                image_rgba.save(file_path)
+                status_label.config(text="Image saved successfully.")
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to save image: {e}")
+
+    # Initialize main window
+    root = tk.Tk()
+    root.title("Metadata Editor")
+    root.geometry("500x500")
+
+    # Load Image Button
+    load_button = tk.Button(root, text="Load Image", command=load_image)
+    load_button.pack(pady=10)
+
+    # Metadata Text Area
+    metadata_text = tk.Text(root, wrap=tk.WORD, height=15, width=50)
+    metadata_text.pack(padx=10, pady=10)
+
+    # Mode Checkbox
+    mode_var = tk.IntVar(value=0)  # Default is "alpha" (unchecked)
+    mode_checkbox = tk.Checkbutton(root, text="Use RGB mode for metadata", variable=mode_var)
+    mode_checkbox.pack(pady=5)
+
+    # Compressed Checkbox
+    compressed_var = tk.IntVar(value=1)  # Default is True (checked)
+    compressed_checkbox = tk.Checkbutton(root, text="Compress metadata", variable=compressed_var)
+    compressed_checkbox.pack(pady=5)
+
+    # Save Image Button
+    save_button = tk.Button(root, text="Save Image", command=save_image)
+    save_button.pack(pady=10)
+
+    # Status Label
+    status_label = tk.Label(root, text="", fg="green")
+    status_label.pack(pady=10)
+
+    root.mainloop()
