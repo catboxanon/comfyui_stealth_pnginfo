@@ -176,6 +176,7 @@ app.registerExtension({
     // https://github.com/Comfy-Org/ComfyUI_frontend/blob/8d7693e5adf1ef5475c636a697c3e1baeb29451d/src/scripts/app.ts#L2686
     document.addEventListener("drop", async (evt) => {
       evt.preventDefault();
+      evt.stopImmediatePropagation();
 
       const n = app.dragOverNode;
       app.dragOverNode = null;
@@ -199,36 +200,71 @@ app.registerExtension({
         const fileName = removeExt(file.name);
         const img = new Image();
         img.src = URL.createObjectURL(file);
-        img.onload = async () => {
-          evt.stopPropagation();
-          const info = readInfoFromImageStealth(img);
-          try {
-            if (info) {
-              const pngInfo = JSON.parse(info);
-              if (pngInfo?.workflow) {
-                await app.loadGraphData(
-                  JSON.parse(pngInfo.workflow),
-                  true,
-                  true,
-                  fileName
-                );
-                clearUnableToFindWorkflowModal();
-              } else if (pngInfo?.prompt) {
-                app.loadApiJson(JSON.parse(pngInfo.prompt), fileName);
-                clearUnableToFindWorkflowModal();
-              } else if (pngInfo?.parameters) {
-                app.changeWorkflow(() => {
-                  importA1111(app.graph, pngInfo.parameters);
-                }, fileName);
-                clearUnableToFindWorkflowModal();
+        const loadImage = async img => {
+          return new Promise((resolve, reject) => {
+            img.onerror = () => resolve(false);
+            img.onload = async () => {
+              const info = readInfoFromImageStealth(img);
+              try {
+                if (info) {
+                  const pngInfo = JSON.parse(info);
+                  if (pngInfo?.workflow) {
+                    await app.loadGraphData(
+                      JSON.parse(pngInfo.workflow),
+                      true,
+                      true,
+                      fileName
+                    );
+                    clearUnableToFindWorkflowModal();
+                    resolve(true);
+                    return;
+                  } else if (pngInfo?.prompt) {
+                    app.loadApiJson(JSON.parse(pngInfo.prompt), fileName);
+                    clearUnableToFindWorkflowModal();
+                    resolve(true);
+                    return;
+                  } else if (pngInfo?.parameters) {
+                    app.changeWorkflow(() => {
+                      importA1111(app.graph, pngInfo.parameters);
+                    }, fileName);
+                    clearUnableToFindWorkflowModal();
+                    resolve(true);
+                    return;
+                  }
+                }
+              } catch (err) {
+                console.error("Error reading stealth pnginfo: ", err);
               }
-            }
-          } catch (err) {
-            console.error("Error reading stealth pnginfo: ", err);
-          }
+              resolve(false);
+            };
+          });
         };
+        const result = await loadImage(img);
+        if (result) {
+          return;
+        }
       }
-    });
+      
+      if (
+        evt.dataTransfer.files.length &&
+        evt.dataTransfer.files[0].type !== 'image/bmp'
+      ) {
+        await app.handleFile(evt.dataTransfer.files[0])
+        console.log("Loaded image from tEXt chunk");
+      } else {
+        // Try loading the first URI in the transfer list
+        const validTypes = ['text/uri-list', 'text/x-moz-url']
+        const match = [...evt.dataTransfer.types].find((t) =>
+          validTypes.find((v) => t === v)
+        )
+        if (match) {
+          const uri = evt.dataTransfer.getData(match)?.split('\n')?.[0]
+          if (uri) {
+            await app.handleFile(await (await fetch(uri)).blob())
+          }
+        }
+      }
+    }, { capture: true });
   },
   async setup() {
     const script = document.createElement("script");
