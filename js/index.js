@@ -250,7 +250,6 @@ app.registerExtension({
         evt.dataTransfer.files[0].type !== 'image/bmp'
       ) {
         await app.handleFile(evt.dataTransfer.files[0])
-        console.log("Loaded image from tEXt chunk");
       } else {
         // Try loading the first URI in the transfer list
         const validTypes = ['text/uri-list', 'text/x-moz-url']
