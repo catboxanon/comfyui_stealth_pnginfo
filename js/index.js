@@ -1,4 +1,5 @@
 import { app } from "../../scripts/app.js";
+import { importA1111 } from "../../scripts/pnginfo.js";
 import { applyTextReplacements } from "../../scripts/utils.js";
 
 // https://gist.github.com/catboxanon/ca46eb79ce55e3216aecab49d5c7a3fb
@@ -207,7 +208,16 @@ app.registerExtension({
               const info = readInfoFromImageStealth(img);
               try {
                 if (info) {
-                  const pngInfo = JSON.parse(info);
+                    let pngInfo;
+                    try {
+                      pngInfo = JSON.parse(info);
+                    } catch (e) {
+                      if (typeof info === 'string') {
+                        pngInfo = { parameters: info };
+                      } else {
+                        throw e;
+                      }
+                    }
                   if (pngInfo?.workflow) {
                     await app.loadGraphData(
                       JSON.parse(pngInfo.workflow),
@@ -224,9 +234,7 @@ app.registerExtension({
                     resolve(true);
                     return;
                   } else if (pngInfo?.parameters) {
-                    app.changeWorkflow(() => {
-                      importA1111(app.graph, pngInfo.parameters);
-                    }, fileName);
+                    importA1111(app.graph, pngInfo.parameters);
                     clearUnableToFindWorkflowModal();
                     resolve(true);
                     return;
